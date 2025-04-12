@@ -12,7 +12,6 @@
       font-family: 'Amiri', serif;
       background-color: #f0f0f0;
     }
-
     .header {
       background-color: #ffffff;
       padding: 20px;
@@ -24,7 +23,6 @@
       flex-wrap: wrap;
       text-align: center;
     }
-
     .logo {
       position: absolute;
       left: 20px;
@@ -34,36 +32,30 @@
       object-fit: cover;
       box-shadow: 0 0 8px rgba(0,0,0,0.3);
     }
-
     .text-content {
       max-width: 750px;
       margin: auto;
     }
-
     .text-content p.bismillah {
       font-size: 22px;
       color: #444;
       margin: 5px 0;
     }
-
     .text-content h1 {
       font-size: 28px;
       color: #2c3e50;
       margin: 10px 0;
     }
-
     .text-content h2 {
       font-size: 17px;
       color: #666;
       margin: 0;
     }
-
     #datetime {
       font-size: 16px;
       color: #333;
       margin-top: 8px;
     }
-
     .notice {
       font-size: 16px;
       color: #b30000;
@@ -74,21 +66,112 @@
       text-align: center;
       box-shadow: 0 0 5px rgba(255, 0, 0, 0.1);
     }
-
     @media (max-width: 600px) {
       .header {
         flex-direction: column;
         padding: 20px;
       }
-
       .logo {
         position: static;
         margin-bottom: 10px;
       }
-
       .text-content {
         text-align: center;
       }
+    }
+
+    #student-list {
+      padding: 20px;
+      text-align: center;
+    }
+    #student-ul {
+      list-style-type: none;
+      padding: 0;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    #student-ul li {
+      background-color: #fff;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    #student-ul li img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 20px;
+    }
+    #student-ul li a {
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #student-details {
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      margin: 20px auto;
+      max-width: 600px;
+      display: none;
+    }
+    #details img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      display: block;
+      margin: 10% auto;
+      max-width: 90%;
+      border-radius: 10px;
+    }
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: white;
+      font-size: 30px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Back to List button style */
+    .back-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .back-button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .back-button:active {
+      background-color: #388E3C;
+      transform: scale(0.98);
     }
   </style>
 </head>
@@ -107,8 +190,23 @@
 
   <marquee class="notice" id="noticeText">⏳ লোড হচ্ছে...</marquee>
 
+  <div id="student-list">
+    <h2>Student List</h2>
+    <ul id="student-ul"></ul>
+  </div>
+
+  <div id="student-details">
+    <h2>Student Details</h2>
+    <div id="details"></div>
+    <button class="back-button" onclick="goBack()">⬅️ Back to List</button>
+  </div>
+
+  <div id="myModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImg">
+  </div>
+
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAvcVuf7Cv-bSDZA5UHvSej69AhjJWc93s",
       authDomain: "fire-fox-83e12.firebaseapp.com",
@@ -119,18 +217,17 @@
       appId: "1:262028687961:web:28325733cd68a920dc4f48"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Load notice text from Firebase
+    // Notice
     const noticeRef = db.ref("notice");
     noticeRef.on("value", (snapshot) => {
       const notice = snapshot.val();
       document.getElementById("noticeText").innerText = notice || "কোনো নোটিশ পাওয়া যায়নি।";
     });
 
-    // Update time
+    // Time
     function updateDateTime() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -141,7 +238,54 @@
 
     setInterval(updateDateTime, 1000);
     updateDateTime();
-  </script>
 
+    // Student List
+    const studentListRef = db.ref('students');
+    studentListRef.on('child_added', function(snapshot) {
+      const student = snapshot.val();
+      const li = document.createElement('li');
+      li.innerHTML = `<img src="${student.profileURL}" alt="${student.name}" onclick="openModal('${student.profileURL}')">
+                      <a href="javascript:void(0);" onclick="viewStudentDetails('${snapshot.key}')">${student.name}</a>`;
+      document.getElementById('student-ul').appendChild(li);
+    });
+
+    function viewStudentDetails(studentId) {
+      document.getElementById('student-list').style.display = 'none';
+      document.getElementById('student-details').style.display = 'block';
+
+      const ref = db.ref('students/' + studentId);
+      ref.once('value', function(snapshot) {
+        const s = snapshot.val();
+        const d = document.getElementById('details');
+        d.innerHTML = `
+          <h3>Name: ${s.name}</h3>
+          <p>Father's Name: ${s.father}</p>
+          <p>Mother's Name: ${s.mother}</p>
+          <p>Phone: ${s.phone}</p>
+          <p>Email: ${s.email}</p>
+          <p>Account Number: ${s.accountNumber}</p>
+          <p>District: ${s.district}</p>
+          <p>Thana: ${s.thana}</p>
+          <p>Village: ${s.village}</p>
+          ${s.profileURL ? `<img src="${s.profileURL}" onclick="openModal('${s.profileURL}')">` : ''}
+          ${s.docURL ? `<img src="${s.docURL}" onclick="openModal('${s.docURL}')">` : ''}
+        `;
+      });
+    }
+
+    function goBack() {
+      document.getElementById('student-details').style.display = 'none';
+      document.getElementById('student-list').style.display = 'block';
+    }
+
+    function openModal(src) {
+      document.getElementById("myModal").style.display = "block";
+      document.getElementById("modalImg").src = src;
+    }
+
+    function closeModal() {
+      document.getElementById("myModal").style.display = "none";
+    }
+  </script>
 </body>
 </html>
