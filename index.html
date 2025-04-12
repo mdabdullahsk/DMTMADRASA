@@ -107,6 +107,17 @@
       }
     }
 
+    .about-section {
+      background-color: #ffffff;
+      margin: 30px 20px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      font-size: 18px;
+      line-height: 1.7;
+      color: #333;
+    }
+
     @media (max-width: 600px) {
       .header {
         flex-direction: column;
@@ -130,6 +141,10 @@
         width: 100%;
         max-width: 300px;
         height: 180px;
+      }
+
+      .about-section {
+        font-size: 16px;
       }
     }
   </style>
@@ -158,6 +173,11 @@
     </div>
   </div>
 
+  <!-- আমাদের সম্পর্কে -->
+  <div class="about-section" id="aboutMadrasah">
+    ⏳ আমাদের সম্পর্কে লোড হচ্ছে...
+  </div>
+
   <!-- স্ক্রিপ্ট -->
   <script>
     // Firebase config
@@ -175,11 +195,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Load notice text from Firebase
-    const noticeRef = db.ref("notice");
-    noticeRef.on("value", (snapshot) => {
-      const notice = snapshot.val();
-      document.getElementById("noticeText").innerText = notice || "কোনো নোটিশ পাওয়া যায়নি।";
+    // Load notice text
+    db.ref("notice").on("value", (snapshot) => {
+      document.getElementById("noticeText").innerText = snapshot.val() || "কোনো নোটিশ পাওয়া যায়নি।";
+    });
+
+    // Load about Madrasah content
+    db.ref("aboutMadrasah").on("value", (snapshot) => {
+      document.getElementById("aboutMadrasah").innerText = snapshot.val() || "কোনো বর্ণনা পাওয়া যায়নি।";
     });
 
     // Update time
@@ -190,11 +213,10 @@
       const date = now.toLocaleDateString('bn-BD', options);
       document.getElementById('datetime').innerHTML = `📅 ${date} 🕓 ${time}`;
     }
-
     setInterval(updateDateTime, 1000);
     updateDateTime();
 
-    // Slider Logic
+    // Slider
     const sliderImages = [
       "https://firebasestorage.googleapis.com/v0/b/fire-fox-83e12.appspot.com/o/MD1.jpg?alt=media&token=f9b2b5fe-56ba-4e52-9872-13e1fd5e2652",
       "https://firebasestorage.googleapis.com/v0/b/fire-fox-83e12.appspot.com/o/MD2.jpg?alt=media&token=8bb57194-b4a0-4f70-b15e-01c6900bca5f",
@@ -206,8 +228,8 @@
 
     setInterval(() => {
       currentIndex = (currentIndex + 1) % sliderImages.length;
-      slider.classList.remove("slide"); // remove old animation if any
-      void slider.offsetWidth; // trigger reflow
+      slider.classList.remove("slide");
+      void slider.offsetWidth;
       slider.src = sliderImages[currentIndex];
       slider.classList.add("slide");
     }, 4000);
